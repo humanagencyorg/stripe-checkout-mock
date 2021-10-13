@@ -15,8 +15,6 @@ Gem::Specification.new do |spec| # rubocop:disable Metrics/BlockLength
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 2.7.0"
 
-  spec.metadata["allowed_push_host"] = "TODO: Set to 'http://mygemserver.com'"
-
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/humanagency/stripe-checkout-mock"
   spec.metadata["changelog_uri"] = "https://github.com/humanagency/stripe-checkout-mock"
