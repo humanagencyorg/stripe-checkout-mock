@@ -1,0 +1,68 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+
+# rspec failure tracking
+.rspec_status
+!.keep
+*.DS_Store
+.byebug_history
+/.bundle
+/.env.local
+/coverage/*
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/log/*
+/node_modules
+/public/assets
+/public/packs
+/public/packs-test
+/public/system
+storage/
+/tags
+/tmp/*
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity
+.env*
+dump.rdb
+twilio-stub.store
+
+# Ignore master key for decrypting credentials and more.
+/config/master.key
+
+# Ignore inherited rubocop config
+.rubocop-https*
+
+# Ignore erd schema
+erd.pdf
+
+# Ignore vim's swap files
+.*.sw?
+
+/public/packs
+/public/packs-test
+/node_modules
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity
+
+# Ignore ruby language server setting
+.solargraph.yml
+/spec/artifacts
+
+/spec/reports
+tags.lock
+tags.temp
+
+# buildkite
+buildkite.*
+
+# ignore db backups from heroku
+/data/**/*
+
