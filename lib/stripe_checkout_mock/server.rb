@@ -36,6 +36,40 @@ module StripeCheckoutMock
       redirect session.success_url
     end
 
+    get "/manage" do
+      pay_form = <<~HTML
+        <form id="pay" action="/manage/pay" method="post">
+          <input type="hidden" name="customer" value="#{params[:customer]}">
+          <input type="hidden" name="return_url" value="#{params[:return_url]}">
+
+          <input type="submit">
+        </form>
+      HTML
+
+      return_button = "<a href='#{params[:return_url]}' id='return'>Cancel</a>"
+
+      with_template do
+        pay_form + return_button
+      end
+    end
+
+    post "/manage/pay" do
+      subscription = Stripe::Customer.
+        retrieve(params["customer"]).
+        subscriptions.
+        first
+
+      StripeMock.instance.subscriptions[subscription.id][:status] = "active"
+      event = StripeMock.mock_webhook_event(
+        "customer.subscription.updated",
+        id: subscription.id,
+        customer: params["customer"],
+      )
+      StripeCheckoutMock.webhook_queue.add(event)
+
+      redirect params["return_url"]
+    end
+
     private
 
     def with_template

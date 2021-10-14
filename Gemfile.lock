@@ -11,7 +11,7 @@ GIT
 PATH
   remote: .
   specs:
-    stripe-checkout-mock (0.0.1)
+    stripe-checkout-mock (0.0.2)
       capybara
       sinatra (~> 2.0)
       stripe
@@ -122,4 +122,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   2.2.18
+   2.2.27
