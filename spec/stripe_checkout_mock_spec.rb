@@ -1,4 +1,5 @@
 require_relative "./spec_helper"
+require "cgi"
 require "stripe_mock"
 require "stripe_checkout_mock/server"
 require "stripe_checkout_mock/queues/webhook_queue"
@@ -120,7 +121,8 @@ RSpec.describe StripeCheckoutMock do
       StripeMock.start
 
       host = "http://localhost:5353"
-      return_url = "fake.url"
+      return_url = "https://fake.url?fizz=buzz&hello=world"
+      escaped_url = CGI.escape(return_url)
       customer = "cus_fake_id"
 
       server = instance_double(Capybara::Server, base_url: host)
@@ -134,7 +136,7 @@ RSpec.describe StripeCheckoutMock do
       )
 
       expected_url =
-        "#{host}/manage?return_url=#{return_url}&customer=#{customer}"
+        "#{host}/manage?return_url=#{escaped_url}&customer=#{customer}"
       expect(result).to be_a(OpenStruct)
       expect(result.url).to eq(expected_url)
       StripeMock.stop

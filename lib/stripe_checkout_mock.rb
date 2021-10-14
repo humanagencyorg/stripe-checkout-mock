@@ -32,10 +32,10 @@ module StripeCheckoutMock
       end
     end
 
-    def manage_portal(args)
+    def manage_portal(return_url:, customer:)
       url = URI(@manage_url)
-      url.query = "return_url=#{args[:return_url]}"\
-                  "&customer=#{args[:customer]}"
+      url.query =
+        URI.encode_www_form({ return_url: return_url, customer: customer })
       OpenStruct.new(url: url.to_s)
     end
 

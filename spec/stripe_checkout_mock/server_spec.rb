@@ -67,10 +67,10 @@ RSpec.describe StripeCheckoutMock::Server do
     describe "GET /manage" do
       it "renders pay and cancel buttons" do
         customer = "fake_customer"
-        return_url = "https://fake_return.com"
+        return_url = "https://fake_return.com?fizz=buzz&hello=world"
         expected_checkout_path = "/manage/pay"
 
-        get "/manage?return_url=#{return_url}&customer=#{customer}"
+        get "/manage", return_url: return_url, customer: customer
 
         doc = Nokogiri::HTML(last_response.body)
 
@@ -164,7 +164,8 @@ RSpec.describe StripeCheckoutMock::Server do
     describe "POST /manage/pay" do
       it "updates subscription and redirect user" do
         return_url = "https://fake_return.com"
-        customer = Stripe::Customer.create(source: StripeMock.generate_card_token)
+        customer =
+          Stripe::Customer.create(source: StripeMock.generate_card_token)
         product = Stripe::Product.create(name: "Product")
         price = Stripe::Price.create(product: product.id, currency: "usd")
         subscription = Stripe::Subscription.create(
@@ -192,7 +193,8 @@ RSpec.describe StripeCheckoutMock::Server do
 
       it "enqueues subscription update event" do
         return_url = "https://fake_return.com"
-        customer = Stripe::Customer.create(source: StripeMock.generate_card_token)
+        customer =
+          Stripe::Customer.create(source: StripeMock.generate_card_token)
         product = Stripe::Product.create(name: "Product")
         price = Stripe::Price.create(product: product.id, currency: "usd")
         subscription = Stripe::Subscription.create(
@@ -214,7 +216,7 @@ RSpec.describe StripeCheckoutMock::Server do
         expect(last_response.status).to eq(302)
         expect(StripeMock).to have_received(:mock_webhook_event).
           with(
-            "customer.subscription.updated", 
+            "customer.subscription.updated",
             id: subscription.id,
             customer: customer.id,
           )
