@@ -55,12 +55,45 @@ RSpec.describe StripeCheckoutMock::Server do
         expect(form).not_to be_nil
         expect(form["action"]).to eq(expected_checkout_path)
         expect(form["method"]).to eq("post")
-        submit = doc.search("form#checkout input[type='submit']").first
+        submit = form.search("input[type='submit']").first
         expect(submit).not_to be_nil
 
         cancel = doc.search("a#cancel").first
         expect(cancel).not_to be_nil
         expect(cancel["href"]).to eq(cancel_url)
+      end
+    end
+
+    describe "GET /manage" do
+      it "renders pay and cancel buttons" do
+        customer = "fake_customer"
+        return_url = "https://fake_return.com?fizz=buzz&hello=world"
+        expected_checkout_path = "/manage/pay"
+
+        get "/manage", return_url: return_url, customer: customer
+
+        doc = Nokogiri::HTML(last_response.body)
+
+        return_button = doc.search("a#return").first
+        expect(return_button).not_to be_nil
+        expect(return_button["href"]).to eq(return_url)
+
+        doc = Nokogiri::HTML(last_response.body)
+        form = doc.search("form#pay").first
+        expect(form).not_to be_nil
+        expect(form["action"]).to eq(expected_checkout_path)
+        expect(form["method"]).to eq("post")
+
+        hidden1 = form.search("input[name='customer']").first
+        expect(hidden1).not_to be_nil
+        expect(hidden1[:value]).to eq(customer)
+
+        hidden2 = form.search("input[name='return_url']").first
+        expect(hidden2).not_to be_nil
+        expect(hidden2[:value]).to eq(return_url)
+
+        submit = form.search("input[type='submit']").first
+        expect(submit).not_to be_nil
       end
     end
 
@@ -125,6 +158,70 @@ RSpec.describe StripeCheckoutMock::Server do
         expect(StripeCheckoutMock).to have_received(:webhook_queue)
         expect(queue).to have_received(:add).
           with(event)
+      end
+    end
+
+    describe "POST /manage/pay" do
+      it "updates subscription and redirect user" do
+        return_url = "https://fake_return.com"
+        customer =
+          Stripe::Customer.create(source: StripeMock.generate_card_token)
+        product = Stripe::Product.create(name: "Product")
+        price = Stripe::Price.create(product: product.id, currency: "usd")
+        subscription = Stripe::Subscription.create(
+          customer: customer,
+          items: [{ price: price.id }],
+        )
+        StripeMock.instance.subscriptions[subscription.id][:status] = "unpaid"
+
+        event = { fake: :event }
+        queue = instance_double(StripeCheckoutMock::Queues::WebhookQueue)
+        allow(StripeMock).to receive(:mock_webhook_event).
+          and_return(event)
+        allow(StripeCheckoutMock).to receive(:webhook_queue).
+          and_return(queue)
+        allow(queue).to receive(:add)
+
+        post "/manage/pay", { customer: customer.id, return_url: return_url }
+
+        expect(last_response.status).to eq(302)
+        expect(last_response.headers["Location"]).to eq(return_url)
+
+        reloaded_subscription = Stripe::Subscription.retrieve(subscription.id)
+        expect(reloaded_subscription.status).to eq("active")
+      end
+
+      it "enqueues subscription update event" do
+        return_url = "https://fake_return.com"
+        customer =
+          Stripe::Customer.create(source: StripeMock.generate_card_token)
+        product = Stripe::Product.create(name: "Product")
+        price = Stripe::Price.create(product: product.id, currency: "usd")
+        subscription = Stripe::Subscription.create(
+          customer: customer,
+          items: [{ price: price.id }],
+        )
+        StripeMock.instance.subscriptions[subscription.id][:status] = "unpaid"
+
+        event = { fake: :event }
+        queue = instance_double(StripeCheckoutMock::Queues::WebhookQueue)
+        allow(StripeMock).to receive(:mock_webhook_event).
+          and_return(event)
+        allow(StripeCheckoutMock).to receive(:webhook_queue).
+          and_return(queue)
+        allow(queue).to receive(:add)
+
+        post "/manage/pay", { customer: customer.id, return_url: return_url }
+
+        expect(last_response.status).to eq(302)
+        expect(StripeMock).to have_received(:mock_webhook_event).
+          with(
+            "customer.subscription.updated",
+            id: subscription.id,
+            customer: customer.id,
+          )
+        expect(StripeCheckoutMock).to have_received(:webhook_queue)
+        expect(queue).to have_received(:add).with(event)
       end
     end
   end

@@ -1,4 +1,5 @@
 require_relative "./spec_helper"
+require "cgi"
 require "stripe_mock"
 require "stripe_checkout_mock/server"
 require "stripe_checkout_mock/queues/webhook_queue"
@@ -56,6 +57,23 @@ RSpec.describe StripeCheckoutMock do
       clean_instance_variables
     end
 
+    it "sets manage_url" do
+      StripeMock.start
+      host = "http://localhost:5353"
+      server = instance_double(Capybara::Server, base_url: host)
+      expected_url = "#{host}/manage"
+      allow(StripeCheckoutMock::Server).
+        to receive(:boot_once).and_return(server)
+
+      expect { described_class.start }.
+        to change(described_class, :manage_url).
+        from(nil).
+        to(expected_url)
+
+      StripeMock.stop
+      clean_instance_variables
+    end
+
     context "when StripeMock not loaded" do
       it "raises an error" do
         allow(StripeCheckoutMock).to receive(:const_defined?).and_return(false)
@@ -84,7 +102,8 @@ RSpec.describe StripeCheckoutMock do
 
   describe ".stop" do
     it "resets all instance variables" do
-      variables = %i[@webhook_url @webhook_queue @webhook_secret @checkout_url]
+      variables = %i[@webhook_url @webhook_queue @webhook_secret @checkout_url
+                     @manage_url]
       variables.each do |name|
         described_class.instance_variable_set(name, "fake_data")
       end
@@ -94,6 +113,33 @@ RSpec.describe StripeCheckoutMock do
       variables.each do |name|
         expect(described_class.instance_variable_get(name)).to eq(nil)
       end
+    end
+  end
+
+  describe ".manage_portal" do
+    it "returns OpenStruct object with url" do
+      StripeMock.start
+
+      host = "http://localhost:5353"
+      return_url = "https://fake.url?fizz=buzz&hello=world"
+      escaped_url = CGI.escape(return_url)
+      customer = "cus_fake_id"
+
+      server = instance_double(Capybara::Server, base_url: host)
+      allow(StripeCheckoutMock::Server).
+        to receive(:boot_once).and_return(server)
+      described_class.start
+
+      result = described_class.manage_portal(
+        return_url: return_url,
+        customer: customer,
+      )
+
+      expected_url =
+        "#{host}/manage?return_url=#{escaped_url}&customer=#{customer}"
+      expect(result).to be_a(OpenStruct)
+      expect(result.url).to eq(expected_url)
+      StripeMock.stop
     end
   end
 
@@ -147,7 +193,8 @@ RSpec.describe StripeCheckoutMock do
   end
 
   def clean_instance_variables
-    %i[@webhook_url @webhook_queue @webhook_secret @checkout_url].each do |name|
+    %i[@webhook_url @webhook_queue @webhook_secret @checkout_url
+       @manage_url].each do |name|
       described_class.instance_variable_set(name, nil)
     end
   end
