@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "uri"
+require "active_support/core_ext/hash"
 require_relative "stripe_checkout_mock/version"
 require_relative "stripe_checkout_mock/server"
 require_relative "stripe_checkout_mock/queues/webhook_queue"

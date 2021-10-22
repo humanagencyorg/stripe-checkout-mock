@@ -27,9 +27,15 @@ module StripeCheckoutMock
 
     post "/stripe/checkout/:session_id/subscribe" do
       session = Stripe::Checkout::Session.retrieve(params["session_id"])
+      payment_method = Stripe::PaymentMethod.create(type: "card")
+      subscription = StripeMock.create_test_helper.
+        complete_checkout_session(session, payment_method)
+      StripeMock.instance.
+        checkout_sessions[params["session_id"]][:subscription] = subscription.id
       event = StripeMock.mock_webhook_event(
         "checkout.session.completed",
         id: session.id,
+        subscription: subscription.id,
       )
       StripeCheckoutMock.webhook_queue.add(event)
 

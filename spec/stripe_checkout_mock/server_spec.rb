@@ -101,20 +101,25 @@ RSpec.describe StripeCheckoutMock::Server do
       it "redirects user to success_url" do
         success_url = "https://fake_success.com"
         cancel_url = "https://fake_cancel.com"
+        customer =
+          Stripe::Customer.create(source: StripeMock.generate_card_token)
+        product = Stripe::Product.create(name: "Product")
+        price = Stripe::Price.create(product: product.id, currency: "usd")
+
         queue = instance_double(
           StripeCheckoutMock::Queues::WebhookQueue,
           add: nil,
         )
         StripeCheckoutMock.instance_variable_set(:@webhook_queue, queue)
         session = Stripe::Checkout::Session.create(
-          customer: "fake_customer_id",
+          customer: customer.id,
           success_url: success_url,
           cancel_url: cancel_url,
           payment_method_types: ["card"],
           mode: "subscription",
           line_items: [
             {
-              price: "fake_price_id",
+              price: price.id,
               quantity: 1,
             },
           ],
@@ -126,23 +131,66 @@ RSpec.describe StripeCheckoutMock::Server do
         expect(last_response.headers["Location"]).to eq(success_url)
       end
 
-      it "enqueues checkout success event" do
+      it "creates subscription" do
         success_url = "https://fake_success.com"
         cancel_url = "https://fake_cancel.com"
+        customer =
+          Stripe::Customer.create(source: StripeMock.generate_card_token)
+        product = Stripe::Product.create(name: "Product")
+        price = Stripe::Price.create(product: product.id, currency: "usd")
+
+        queue = instance_double(
+          StripeCheckoutMock::Queues::WebhookQueue,
+          add: nil,
+        )
+        StripeCheckoutMock.instance_variable_set(:@webhook_queue, queue)
         session = Stripe::Checkout::Session.create(
-          customer: "fake_customer_id",
+          customer: customer.id,
           success_url: success_url,
           cancel_url: cancel_url,
           payment_method_types: ["card"],
           mode: "subscription",
           line_items: [
             {
-              price: "fake_price_id",
+              price: price.id,
+              quantity: 1,
+            },
+          ],
+        )
+
+        post "/stripe/checkout/#{session.id}/subscribe"
+
+        reloaded_sesssion = Stripe::Checkout::Session.retrieve(session.id)
+        expect(reloaded_sesssion.subscription).to be_present
+
+        subscription =
+          Stripe::Subscription.retrieve(reloaded_sesssion.subscription)
+        expect(subscription).to be_present
+        expect(subscription.items.count).to eq(1)
+      end
+
+      it "enqueues checkout success event" do
+        success_url = "https://fake_success.com"
+        cancel_url = "https://fake_cancel.com"
+        customer =
+          Stripe::Customer.create(source: StripeMock.generate_card_token)
+        product = Stripe::Product.create(name: "Product")
+        price = Stripe::Price.create(product: product.id, currency: "usd")
+        session = Stripe::Checkout::Session.create(
+          customer: customer.id,
+          success_url: success_url,
+          cancel_url: cancel_url,
+          payment_method_types: ["card"],
+          mode: "subscription",
+          line_items: [
+            {
+              price: price.id,
               quantity: 1,
             },
           ],
         )
         event = { fake: :event }
+
         queue = instance_double(StripeCheckoutMock::Queues::WebhookQueue)
         allow(StripeMock).to receive(:mock_webhook_event).
           and_return(event)
@@ -152,9 +200,14 @@ RSpec.describe StripeCheckoutMock::Server do
 
         post "/stripe/checkout/#{session.id}/subscribe"
 
+        reloaded_sesssion = Stripe::Checkout::Session.retrieve(session.id)
         expect(last_response.status).to eq(302)
         expect(StripeMock).to have_received(:mock_webhook_event).
-          with("checkout.session.completed", id: session.id)
+          with(
+            "checkout.session.completed",
+            id: session.id,
+            subscription: reloaded_sesssion.subscription,
+          )
         expect(StripeCheckoutMock).to have_received(:webhook_queue)
         expect(queue).to have_received(:add).
           with(event)
