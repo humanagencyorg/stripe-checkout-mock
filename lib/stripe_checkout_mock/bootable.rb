@@ -23,6 +23,7 @@ module StripeCheckoutMock
     end
 
     def find_available_port
+      SleepUtil.short_random_sleep
       server = TCPServer.new(0)
       server.addr[1]
     ensure
