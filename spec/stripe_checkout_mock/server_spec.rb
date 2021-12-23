@@ -61,6 +61,36 @@ RSpec.describe StripeCheckoutMock::Server do
         cancel = doc.search("a#cancel").first
         expect(cancel).not_to be_nil
         expect(cancel["href"]).to eq(cancel_url)
+
+        promo_code = doc.search("input#promo_code").first
+        expect(promo_code).to be_nil
+      end
+
+      context "when allow_promotion_codes is true" do
+        it "renders promo code section" do
+          success_url = "https://fake_success.com"
+          cancel_url = "https://fake_cancel.com"
+          session = Stripe::Checkout::Session.create(
+            customer: "fake_customer_id",
+            success_url: success_url,
+            cancel_url: cancel_url,
+            payment_method_types: ["card"],
+            allow_promotion_codes: true,
+            mode: "subscription",
+            line_items: [
+              {
+                price: "fake_price_id",
+                quantity: 1,
+              },
+            ],
+          )
+
+          get "/stripe/checkout/#{session.id}"
+
+          doc = Nokogiri::HTML(last_response.body)
+          promo_code = doc.search("input#promo_code").first
+          expect(promo_code).not_to be_nil
+        end
       end
     end
 

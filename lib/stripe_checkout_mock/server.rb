@@ -21,7 +21,15 @@ module StripeCheckoutMock
       cancel_button = "<a href='#{session.cancel_url}' id='cancel'>Cancel</a>"
 
       with_template do
-        checkout_form + cancel_button
+        content = checkout_form + cancel_button
+
+        if session.allow_promotion_codes
+          promo_code_input = "<input id='promo_code'></input>"
+
+          content += promo_code_input
+        end
+
+        content
       end
     end
 

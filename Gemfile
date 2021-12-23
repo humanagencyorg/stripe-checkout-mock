@@ -11,5 +11,5 @@ group :test do
   gem "rspec", "~> 3.0"
   gem "stripe-ruby-mock",
       github: "humanagencyorg/stripe-ruby-mock",
-      ref: "e890d45dc9d5534038d7def969384d6a81bb5994"
+      ref: "bb9de6e1a2f10b882fd0036ef155e06d2b69b298"
 end
