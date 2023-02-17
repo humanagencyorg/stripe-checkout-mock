@@ -2,6 +2,7 @@ require_relative "../spec_helper"
 
 require "socket"
 require "stripe_checkout_mock/bootable"
+require "stripe_checkout_mock/sleep_util"
 
 RSpec.describe StripeCheckoutMock::Bootable do
   describe ".port" do
@@ -39,6 +40,27 @@ RSpec.describe StripeCheckoutMock::Bootable do
 
       expect(results.uniq).to eq([3000])
       expect(TCPServer).to have_received(:new).with(0).once
+    end
+
+    it "avoids port contention" do
+      dummy_class = Class.new { extend StripeCheckoutMock::Bootable }
+      fake_server_addr = ["AF_INET6", 3000, "::", "::"]
+      server_instance = instance_double(TCPServer)
+      sleep_stub = class_double(SleepUtil).as_stubbed_const
+
+      allow(sleep_stub).
+        to receive(:short_random_sleep)
+      allow(TCPServer).
+        to receive(:new).
+        and_return(server_instance)
+      allow(server_instance).
+        to receive(:addr).
+        and_return(fake_server_addr)
+      allow(server_instance).to receive(:close)
+
+      Array.new(3) { dummy_class.port }
+
+      expect(sleep_stub).to have_received(:short_random_sleep).once
     end
   end
 
