@@ -39,6 +39,6 @@ Gem::Specification.new do |spec| # rubocop:disable Metrics/BlockLength
 
   spec.add_runtime_dependency "activesupport"
   spec.add_runtime_dependency "capybara"
-  spec.add_runtime_dependency "sinatra", "~> 3.0"
+  spec.add_runtime_dependency "sinatra", ">= 2.2.2"
   spec.add_runtime_dependency "stripe"
 end
