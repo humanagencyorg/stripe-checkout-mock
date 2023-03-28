@@ -11,7 +11,7 @@ GIT
 PATH
   remote: .
   specs:
-    stripe-checkout-mock (0.0.7)
+    stripe-checkout-mock (0.0.8)
       activesupport
       capybara
       sinatra (>= 2.2.2)
