@@ -14,7 +14,7 @@ PATH
     stripe-checkout-mock (0.0.5)
       activesupport
       capybara
-      sinatra (~> 3.0)
+      sinatra (>= 2.2.2)
       stripe
 
 GEM
