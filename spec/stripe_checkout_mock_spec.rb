@@ -137,7 +137,7 @@ RSpec.describe StripeCheckoutMock do
 
       expected_url =
         "#{host}/manage?return_url=#{escaped_url}&customer=#{customer}"
-      expect(result).to be_a(OpenStruct)
+      expect(result).to be_a(OpenStruct) # rubocop:disable Rails/OpenStructUse
       expect(result.url).to eq(expected_url)
       StripeMock.stop
     end

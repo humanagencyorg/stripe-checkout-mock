@@ -9,8 +9,7 @@ Gem::Specification.new do |spec| # rubocop:disable Metrics/BlockLength
   spec.email         = ["alex.b@humanagency.com"]
 
   spec.summary       = "StripeMock for checkout page"
-  spec.description   = "This gem works together with stripe-ruby-mock to make "\
-                       "a similar behavior to checkout process"
+  spec.description   = "This gem works together with stripe-ruby-mock to make a similar behavior to checkout process" # rubocop:disable Metrics/LineLength
   spec.homepage      = "https://github.com/humanagency/stripe-checkout-mock"
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 2.7.0"
@@ -41,4 +40,5 @@ Gem::Specification.new do |spec| # rubocop:disable Metrics/BlockLength
   spec.add_runtime_dependency "capybara"
   spec.add_runtime_dependency "sinatra", ">= 2.2.2"
   spec.add_runtime_dependency "stripe"
+  spec.metadata["rubygems_mfa_required"] = "true"
 end
