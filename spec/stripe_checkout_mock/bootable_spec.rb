@@ -46,7 +46,7 @@ RSpec.describe StripeCheckoutMock::Bootable do
       dummy_class = Class.new { extend StripeCheckoutMock::Bootable }
       fake_server_addr = ["AF_INET6", 3000, "::", "::"]
       server_instance = instance_double(TCPServer)
-      sleep_stub = class_double(SleepUtil).as_stubbed_const
+      sleep_stub = class_double(StripeCheckoutMock::SleepUtil).as_stubbed_const
 
       allow(sleep_stub).
         to receive(:short_random_sleep)

@@ -1,7 +1,7 @@
 require_relative "../spec_helper"
 require "stripe_checkout_mock/sleep_util"
 
-RSpec.describe SleepUtil do
+RSpec.describe StripeCheckoutMock::SleepUtil do
   it "should sleep" do
     time_start = Time.now
 
