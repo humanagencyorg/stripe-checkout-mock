@@ -1,6 +1,7 @@
 require "socket"
 require "capybara"
 require "capybara/server"
+require "stripe_checkout_mock/sleep_util"
 
 module StripeCheckoutMock
   module Bootable
