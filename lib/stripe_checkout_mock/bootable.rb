@@ -1,6 +1,7 @@
 require "socket"
 require "capybara"
 require "capybara/server"
+require "stripe_checkout_mock/sleep_util"
 
 module StripeCheckoutMock
   module Bootable
@@ -23,7 +24,7 @@ module StripeCheckoutMock
     end
 
     def find_available_port
-      SleepUtil.short_random_sleep
+     ::StripeCheckoutMock::SleepUtil.short_random_sleep
       server = TCPServer.new(0)
       server.addr[1]
     ensure
