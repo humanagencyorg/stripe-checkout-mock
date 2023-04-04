@@ -37,7 +37,7 @@ module StripeCheckoutMock
       url = URI(@manage_url)
       url.query =
         URI.encode_www_form({ return_url: return_url, customer: customer })
-      OpenStruct.new(url: url.to_s)
+      OpenStruct.new(url: url.to_s) # rubocop:disable Rails/OpenStructUse
     end
 
     def stop
